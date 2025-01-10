@@ -1,0 +1,5 @@
+.chalice/
+chalicelib/
+scipylayer/
+sympylayer/
+venv/
