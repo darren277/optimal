@@ -46,3 +46,35 @@ deploy-alt:
 list-resources:
 	aws apigateway get-resources --rest-api-id $(REST_API_ID)
 
+
+
+REPOSITORY_URI=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPOSITORY_NAME)
+DWAVE_FUNC_NAME=optimal-dev-test_loading_dwave_func
+DOCKER_IMAGE_NAME=dwave_funcs:test
+
+ecr-init:
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+	aws ecr create-repository --repository-name $(ECR_REPOSITORY_NAME) --region $(AWS_REGION) --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
+
+dwave-build:
+	docker build --platform linux/amd64 -t $(DOCKER_IMAGE_NAME) --file Dockerfile.dwave .
+
+dwave-deploy:
+	docker tag $(DOCKER_IMAGE_NAME) $(REPOSITORY_URI):latest
+	docker push $(REPOSITORY_URI):latest
+
+
+TRUST_POLICY='{"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]}'
+
+create-role:
+	aws iam create-role --role-name lambda-ex --assume-role-policy-document $(TRUST_POLICY)
+
+create-func:
+	aws lambda create-function --function-name $(DWAVE_FUNC_NAME) --package-type Image --code ImageUri=$(REPOSITORY_URI):latest --role arn:aws:iam::$(AWS_ACCOUNT_ID):role/lambda-ex
+
+update-func:
+	aws lambda update-function-code --function-name $(DWAVE_FUNC_NAME) --image-uri $(REPOSITORY_URI):latest --publish
+
+update-func-config:
+	aws lambda update-function-configuration --function-name $(DWAVE_FUNC_NAME) --timeout 120 --memory-size 512
+

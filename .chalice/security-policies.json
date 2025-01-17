@@ -61,7 +61,10 @@
             "Action": [
                 "lambda:InvokeFunction"
             ],
-            "Resource": "arn:aws:lambda:us-east-1:160751179089:function:optimal-dev-test_loading_scipy_func"
+            "Resource": [
+                "arn:aws:lambda:us-east-1:160751179089:function:optimal-dev-test_loading_scipy_func",
+                "arn:aws:lambda:us-east-1:160751179089:function:optimal-dev-test_loading_dwave_func"
+            ]
         }
     ]
 }
