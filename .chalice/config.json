@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "app_name": "optimal",
+  "automatic_layer": true,
+  "stages": {
+    "dev": {
+      "layers": [
+        "arn:aws:lambda:us-east-1:160751179089:layer:pulp_layer:2",
+        "arn:aws:lambda:us-east-1:160751179089:layer:pyomo_layer:2",
+        "arn:aws:lambda:us-east-1:160751179089:layer:sympy_layer:2"
+      ],
+      "lambda_functions": {
+        "test_loading_scipy_func": {"layers":  ["arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p312-scipy:3"]}
+      },
+      "api_gateway_stage": "api",
+      "environment_variables": {
+        "BUCKET_NAME": "temporarytestbucket123412341234",
+        "QUEUE_NAME": "plotq"
+      },
+      "autogen_policy": false,
+      "iam_policy_file": "security-policies.json",
+      "api_gateway_custom_domain": {
+        "domain_name": "optimal.apphosting.services",
+        "certificate_arn": "arn:aws:acm:us-east-1:160751179089:certificate/6843cc0e-3df0-46ab-9026-461675f252fb"
+      },
+      "lambda_timeout": 120,
+      "lambda_memory_size": 512
+    }
+  }
+}

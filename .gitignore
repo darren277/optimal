@@ -1,5 +1,13 @@
-.chalice/
+.chalice/deployments/
+.chalice/deployed/
+
 chalicelib/
 scipylayer/
 sympylayer/
-venv/
+.venv312/
+
+.env
+
+temp/
+.idea/
+*_layer.zip
