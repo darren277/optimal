@@ -21,3 +21,4 @@ def test_loading_dependency(dep: str):
 test_loading_dependency('pyomo')
 test_loading_dependency('pulp')
 test_loading_dependency('sympy')
+test_loading_dependency('scipy')

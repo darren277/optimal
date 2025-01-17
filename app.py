@@ -42,12 +42,28 @@ def test_loading_pyomo():
     print("SUCCESSFULLY LOADED PYOMO", pyomo.__version__)
     return {'pyomo_version': pyomo.__version__, 'success': 'SUCCESSFULLY LOADED PYOMO', 'loading_time': time.time() - start_time}
 
+@app.lambda_function(name='test_loading_scipy_func')
+def test_loading_scipy_func(event, context):
+    import time
+    start_time = time.time()
+    import scipy
+    print("SUCCESSFULLY LOADED SCIPY", scipy.__version__)
+    return {'scipy_version': scipy.__version__, 'success': 'SUCCESSFULLY LOADED SCIPY', 'loading_time': time.time() - start_time}
+
 @app.route('/test_loading_scipy')
 def test_loading_scipy():
-    #import scipy
-    #print("SUCCESSFULLY LOADED SCIPY", scipy.__version__)
-    print("NOT YET IMPLEMENTED")
-    return {'success': 'NOT YET IMPLEMENTED'}
+    lambda_client = boto3.client('lambda')
+    try:
+        response = lambda_client.invoke(
+            FunctionName='optimal-dev-test_loading_scipy_func',
+            InvocationType='RequestResponse',
+            Payload=b'{}'
+        )
+        data = json.loads(response['Payload'].read())
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
+
 
 @app.route('/test_loading_pulp')
 def test_loading_pulp():
