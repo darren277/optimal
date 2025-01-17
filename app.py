@@ -81,6 +81,22 @@ def test_loading_sympy():
     print("SUCCESSFULLY LOADED SYMPY", sympy.__version__)
     return {'sympy_version': sympy.__version__, 'success': 'SUCCESSFULLY LOADED SYMPY', 'loading_time': time.time() - start_time}
 
+@app.route('/test_loading_dwave')
+def test_loading_dwave():
+    lambda_client = boto3.client('lambda')
+    try:
+        response = lambda_client.invoke(
+            FunctionName='optimal-dev-test_loading_dwave_func',
+            InvocationType='RequestResponse',
+            Payload=b'{}'
+        )
+        data = json.loads(response['Payload'].read())
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+#djikstra(destinations_graph, 'Vancouver,Canada', 'Vancouver,Canada')
+
 
 def ts():
     t = datetime.fromtimestamp(time.time())
