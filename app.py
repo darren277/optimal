@@ -70,3 +70,48 @@ def ts():
     t = datetime.fromtimestamp(time.time())
     str_date_time = t.strftime("%Y%m%d%H%M%S%f")
     return str_date_time
+
+
+def unconstrained_optimization(a: int, b: int):
+    import sympy as sp
+
+    # Define parameters (A, B) as positive for economic interpretation
+    A, B = sp.symbols('A B', positive=True, real=True)
+
+    # Define the price variable p (can restrict to p >= 0, but let's keep it real for simplicity)
+    p = sp.Symbol('p', real=True)
+
+    # Revenue function: R(p) = p * (A - B*p)
+    R = p * (A - B * p)
+
+
+    first_derivative = sp.diff(R, p)
+    critical_points = sp.solve(first_derivative, p)
+    print("Critical points:", critical_points)
+
+    second_derivative = sp.diff(first_derivative, p)
+
+    for c_p in critical_points:
+        print(f"Second derivative at p={p}: {second_derivative.subs(p, c_p)}")
+
+    p_star = critical_points[0].subs({A: a, B: b})
+    R_star = R.subs({p: p_star, A: a, B: b})
+
+    print(f"\nNumerical Example (A={a}, B={b}):")
+    print(f"Optimal price p* = {p_star}")
+    print(f"Maximum revenue R* = {R_star}")
+
+    return dict(
+        p_star=int(p_star),
+        R_star=int(R_star),
+        #critical_points=critical_points
+    )
+
+# a = 100, b = 1
+
+@app.route('/unconstrained_optimization')
+def unconstrained_optimization_route():
+    a = app.current_request.query_params.get('a', 100)
+    b = app.current_request.query_params.get('b', 1)
+    return unconstrained_optimization(int(a), int(b))
+
