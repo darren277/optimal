@@ -1,7 +1,8 @@
 include .env
 
 #RESOURCE_ID=$(OPTIMIZE_SINGLE_VARIABLE_RESOURCE_ID)
-RESOURCE_ID=$(OPTIMIZE_MULTIPLE_VARIABLES_RESOURCE_ID)
+#RESOURCE_ID=$(OPTIMIZE_MULTIPLE_VARIABLES_RESOURCE_ID)
+RESOURCE_ID=$(UNCONSTRAINED_OPTIMIZATION_RESOURCE_ID)
 METHOD=GET
 
 
@@ -28,6 +29,7 @@ create-api-key:
 link-key-to-plan:
 	aws apigateway create-usage-plan-key --usage-plan-id $(USAGE_PLAN_ID) --key-id $(API_KEY_ID) --key-type "API_KEY"
 
+# Run this one for each endpoint (resource):
 attach-key-to-endpoint:
 	aws apigateway update-method --rest-api-id $(REST_API_ID) --resource-id $(RESOURCE_ID) --http-method $(METHOD) --patch-operations op=replace,path=/apiKeyRequired,value=true
 

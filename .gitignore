@@ -1,4 +1,6 @@
-.chalice/
+.chalice/deployments/
+.chalice/deployed/
+
 chalicelib/
 scipylayer/
 sympylayer/
