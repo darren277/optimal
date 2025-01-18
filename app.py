@@ -95,6 +95,146 @@ def test_loading_dwave():
     except Exception as e:
         return {'error': str(e)}, 500
 
+
+class LLM_ENV:
+    SYSTEM_PROMPT_FOR_CLASSIFIER = """
+You are a helpful expert assistant for people who need to solve optimization problems.
+
+Your task is to take in plain English descriptions of optimization problems and classify them into one of the following:
+1. Unconstrained optimization.
+2. Equality-constrained optimization.
+3. Linear programming.
+4. Quadratic programming.
+5. Nonlinear programming.
+6. Integer programming.
+7. Mixed-integer programming.
+8. Other or not an optimization problem.
+
+You can ask clarifying questions to help you make a decision. You can also ask for more information if you need it.
+    """
+
+    SYSTEM_PROMPT_FOR_SYMBOLIC_TRANSLATION = """
+You are a helpful expert assistant for people who need to solve optimization problems.
+
+The optimization problem category is: {problem_classification}.
+
+Your task is to take in plain English descriptions of optimization problems and translate them into symbolic form.
+
+If you cannot structure the problem in symbolic form, you will have to state that you cannot do it and provide a reason why.
+    """
+
+    def get_structured_outputs(self):
+        from pydantic import BaseModel
+        from enum import Enum
+
+        class ProblemClassification(str, Enum):
+            UNCONSTRAINED = "Unconstrained optimization"
+            EQUALITY_CONSTRAINED = "Equality-constrained optimization"
+            LINEAR = "Linear programming"
+            QUADRATIC = "Quadratic programming"
+            NONLINEAR = "Nonlinear programming"
+            INTEGER = "Integer programming"
+            MIXED_INTEGER = "Mixed-integer programming"
+            OTHER = "Other or not an optimization problem"
+
+        class OptimizationProblem(BaseModel):
+            description: str
+            classification: ProblemClassification
+
+        return OptimizationProblem
+
+
+def load_key_from_secret_manager(secret_name):
+    session = boto3.session.Session()
+    client = session.client(service_name='secretsmanager', region_name='us-east-1')
+
+    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
+
+
+@app.lambda_function(name='llm_endpoint_func')
+def llm_endpoint_func(event, context):
+    import time
+    structured_response = dict()
+    start_time = time.time()
+    import openai
+    print('EVENT:', event)
+    print("SUCCESSFULLY LOADED OPENAI", openai.__version__)
+
+    api_key = load_key_from_secret_manager('OPTIMAL_OPENAI_API_KEY')['OPTIMAL_OPENAI_API_KEY']
+    try:
+        openai_client = openai.Client(api_key=api_key)
+    except:
+        return {'error': 'FAILED TO LOAD OPENAI'}
+
+    user_message = event.get('problem_description')
+
+    if not user_message:
+        return {'error': 'NO PROBLEM DESCRIPTION PROVIDED'}
+
+    OptimizationProblem = LLM_ENV().get_structured_outputs()
+    # Supported models: o1-2024-12-17 and later, gpt-4o-mini-2024-07-18 and later, gpt-4o-2024-08-06 and later
+
+    # simple chat completion test...
+    model = "gpt-4o-2024-08-06"
+    messages = [
+        {"role": "system", "content": "You are a helpful expert assistant for people who need to solve optimization problems."},
+        {"role": "user", "content": user_message},
+        ##{"role": "user", "content": "I have a problem with a linear programming model."},
+        ##{"role": "system", "content": "I can help you with that. Please provide more details about your problem."},
+        ##{"role": "user", "content": "I have 3 variables and 2 constraints."},
+        ##{"role": "system", "content": "Great! I will help you with that. Please provide the coefficients of the objective function and the constraints."}
+    ]
+    try:
+        result = openai_client.beta.chat.completions.parse(
+            model=model,
+            messages=messages,
+            response_format=OptimizationProblem
+        )
+        print('RESULT:', result)
+        try:
+            choices = result.choices
+            top_choice = choices[0]
+            assistant_message = top_choice.message.content
+
+            structured = json.loads(assistant_message)
+            description = structured['description']
+            classification = structured['classification']
+
+            structured_response.update(
+                description=description,
+                classification=classification
+            )
+        except Exception as e:
+            assistant_message = str(e)
+    except Exception as e:
+        print(e)
+        return {'error': 'FAILED TO COMPLETE CHAT', 'msg': str(e)}
+    return {'openai_version': openai.__version__, 'success': 'SUCCESSFULLY LOADED OPENAI', 'loading_time': time.time() - start_time,
+            'result': assistant_message, 'structured_response': structured_response}
+
+@app.route('/llm_endpoint')
+def llm_endpoint():
+    args = app.current_request.query_params
+    serialized_args = {key: val for key, val in args.items()} if args else {}
+
+    lambda_client = boto3.client('lambda')
+    try:
+        response = lambda_client.invoke(
+            FunctionName='optimal-dev-llm_endpoint_func',
+            InvocationType='RequestResponse',
+            Payload=json.dumps(serialized_args)
+        )
+        data = json.loads(response['Payload'].read())
+        print('data', data)
+        err = data.get('error')
+        if err:
+            return {'error': err}, 500
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
+
 #djikstra(destinations_graph, 'Vancouver,Canada', 'Vancouver,Canada')
 
 
