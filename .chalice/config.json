@@ -10,7 +10,8 @@
         "arn:aws:lambda:us-east-1:160751179089:layer:sympy_layer:2"
       ],
       "lambda_functions": {
-        "test_loading_scipy_func": {"layers":  ["arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p312-scipy:3"]}
+        "test_loading_scipy_func": {"layers":  ["arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p312-scipy:3"]},
+        "llm_endpoint_func": {"layers":  ["arn:aws:lambda:us-east-1:160751179089:layer:openai_layer:2"]}
       },
       "api_gateway_stage": "api",
       "environment_variables": {

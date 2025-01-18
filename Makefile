@@ -18,6 +18,9 @@ create-sympy-layer:
 create-custom-scipy-layer:
 	aws lambda publish-layer-version --layer-name custom_scipy_layer --zip-file fileb://custom_scipy_layer.zip
 
+create-openai-layer:
+	aws lambda publish-layer-version --layer-name openai_layer --zip-file fileb://openai_layer.zip
+
 
 create-usage-plan:
 	aws apigateway create-usage-plan --name "OptimalUsagePlan" --description "Usage plan for optimal Chalice app" \
@@ -46,6 +49,23 @@ deploy-alt:
 list-resources:
 	aws apigateway get-resources --rest-api-id $(REST_API_ID)
 
+
+
+SECRET_SUFFIX=5kW6yx
+#SECRET_SUFFIX=*
+
+SECRET_ARN=arn:aws:secretsmanager:$(AWS_REGION):$(AWS_ACCOUNT_ID):secret:OPTIMAL_OPENAI_API_KEY-$(SECRET_SUFFIX)
+
+SECRETS_STATEMENT={"Effect": "Allow", "Action": "secretsmanager:GetSecretValue", "Resource": "$(SECRET_ARN)"}
+LOG_STATEMENT={"Effect": "Allow", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], "Resource": "arn:aws:logs:$(AWS_REGION):$(AWS_ACCOUNT_ID):*"}
+POLICY='{"Version": "2012-10-17", "Statement": [$(SECRETS_STATEMENT), $(LOG_STATEMENT)]}'
+
+
+update-llm-role:
+	aws iam put-role-policy --role-name optimal-dev-llm_endpoint_func --policy-name optimal-dev-llm_endpoint_func --policy-document $(POLICY)
+
+attach-role-to-func:
+	aws lambda update-function-configuration --function-name optimal-dev-llm_endpoint_func --role arn:aws:iam::160751179089:role/optimal-dev-llm_endpoint_func
 
 
 REPOSITORY_URI=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPOSITORY_NAME)
