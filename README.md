@@ -2,6 +2,10 @@
 
 ## About
 
+URL: https://iknaxd5pj9.execute-api.us-east-1.amazonaws.com/api/.
+
+URL: http://optimal.apphosting.services.
+
 ## How to Use
 
 ### Chalice
