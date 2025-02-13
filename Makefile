@@ -18,6 +18,9 @@ create-sympy-layer:
 create-custom-scipy-layer:
 	aws lambda publish-layer-version --layer-name custom_scipy_layer --zip-file fileb://custom_scipy_layer.zip
 
+create-openai-layer:
+	aws lambda publish-layer-version --layer-name openai_layer --zip-file fileb://openai_layer.zip
+
 
 create-usage-plan:
 	aws apigateway create-usage-plan --name "OptimalUsagePlan" --description "Usage plan for optimal Chalice app" \
@@ -48,18 +51,49 @@ list-resources:
 
 
 
+SECRET_SUFFIX=5kW6yx
+#SECRET_SUFFIX=*
+
+SECRET_ARN=arn:aws:secretsmanager:$(AWS_REGION):$(AWS_ACCOUNT_ID):secret:OPTIMAL_OPENAI_API_KEY-$(SECRET_SUFFIX)
+
+SECRETS_STATEMENT={"Effect": "Allow", "Action": "secretsmanager:GetSecretValue", "Resource": "$(SECRET_ARN)"}
+LOG_STATEMENT={"Effect": "Allow", "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], "Resource": "arn:aws:logs:$(AWS_REGION):$(AWS_ACCOUNT_ID):*"}
+POLICY='{"Version": "2012-10-17", "Statement": [$(SECRETS_STATEMENT), $(LOG_STATEMENT)]}'
+
+
+update-llm-role:
+	aws iam put-role-policy --role-name optimal-dev-llm_endpoint_func --policy-name optimal-dev-llm_endpoint_func --policy-document $(POLICY)
+
+attach-role-to-func:
+	aws lambda update-function-configuration --function-name optimal-dev-llm_endpoint_func --role arn:aws:iam::160751179089:role/optimal-dev-llm_endpoint_func
+
+
 REPOSITORY_URI=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPOSITORY_NAME)
 DWAVE_FUNC_NAME=optimal-dev-test_loading_dwave_func
-DOCKER_IMAGE_NAME=dwave_funcs:test
+PYOMO_FUNC_NAME=optimal-dev-test_loading_pyomo_func
 
-ecr-init:
+# SWITCH BETWEEN THESE AS NEEDED:
+#DOCKERIZED_FUNC_NAME=$(DWAVE_FUNC_NAME)
+DOCKERIZED_FUNC_NAME=$(PYOMO_FUNC_NAME)
+
+# SWITCH BETWEEN THESE AS NEEDED:
+#DOCKER_IMAGE_NAME=dwave_funcs:test
+DOCKER_IMAGE_NAME=pyomo_funcs:test
+
+# SWITCH BETWEEN THESE AS NEEDED:
+#DOCKERFILE=Dockerfile.dwave
+DOCKERFILE=Dockerfile.pyomo
+
+ecr-login:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+
+ecr-create:
 	aws ecr create-repository --repository-name $(ECR_REPOSITORY_NAME) --region $(AWS_REGION) --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE
 
-dwave-build:
-	docker build --platform linux/amd64 -t $(DOCKER_IMAGE_NAME) --file Dockerfile.dwave .
+docker-build:
+	docker build --platform linux/amd64 -t $(DOCKER_IMAGE_NAME) --file $(DOCKERFILE) .
 
-dwave-deploy:
+docker-deploy:
 	docker tag $(DOCKER_IMAGE_NAME) $(REPOSITORY_URI):latest
 	docker push $(REPOSITORY_URI):latest
 
@@ -70,11 +104,11 @@ create-role:
 	aws iam create-role --role-name lambda-ex --assume-role-policy-document $(TRUST_POLICY)
 
 create-func:
-	aws lambda create-function --function-name $(DWAVE_FUNC_NAME) --package-type Image --code ImageUri=$(REPOSITORY_URI):latest --role arn:aws:iam::$(AWS_ACCOUNT_ID):role/lambda-ex
+	aws lambda create-function --function-name $(DOCKERIZED_FUNC_NAME) --package-type Image --code ImageUri=$(REPOSITORY_URI):latest --role arn:aws:iam::$(AWS_ACCOUNT_ID):role/lambda-ex
 
 update-func:
-	aws lambda update-function-code --function-name $(DWAVE_FUNC_NAME) --image-uri $(REPOSITORY_URI):latest --publish
+	aws lambda update-function-code --function-name $(DOCKERIZED_FUNC_NAME) --image-uri $(REPOSITORY_URI):latest --publish
 
 update-func-config:
-	aws lambda update-function-configuration --function-name $(DWAVE_FUNC_NAME) --timeout 120 --memory-size 512
+	aws lambda update-function-configuration --function-name $(DOCKERIZED_FUNC_NAME) --timeout 120 --memory-size 512
 

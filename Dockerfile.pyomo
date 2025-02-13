@@ -1,0 +1,60 @@
+FROM ubuntu:22.04 as builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gfortran \
+    pkg-config \
+    wget \
+    unzip \
+    libblas-dev \
+    liblapack-dev \
+    libmetis-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV IPOPT_VERSION=3.14.4
+ENV TOOL_DIR=/tools
+ENV PATH="/tools/ipopt-install/bin:$PATH"
+
+WORKDIR ${TOOL_DIR}
+
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and build the ThirdParty-ASL (AMPL Solver Library)
+RUN git clone https://github.com/coin-or-tools/ThirdParty-ASL.git \
+    && cd ThirdParty-ASL \
+    && ./get.ASL \
+    && mkdir build && cd build \
+    && ../configure --prefix=${TOOL_DIR}/ipopt-install \
+    && make -j$(nproc) \
+    && make install
+
+RUN wget https://github.com/coin-or/Ipopt/archive/refs/tags/releases/${IPOPT_VERSION}.tar.gz \
+    && tar zxvf ${IPOPT_VERSION}.tar.gz \
+    && rm ${IPOPT_VERSION}.tar.gz \
+    && mv Ipopt-releases-${IPOPT_VERSION} Ipopt
+
+WORKDIR ${TOOL_DIR}/Ipopt
+
+# Explicitly disable HSL and enable MUMPS
+RUN mkdir build && cd build \
+    && ../configure --prefix=${TOOL_DIR}/ipopt-install \
+                    --with-mumps \
+                    --without-hsl \
+                    --with-asl-lib=/tools/ThirdParty-ASL/install/lib \
+                    --with-asl-incdir=/tools/ThirdParty-ASL/install/include/coin-or/asl \
+    && make -j$(nproc) \
+    && make install
+
+ENV LD_LIBRARY_PATH=${TOOL_DIR}/ipopt-install/lib:$LD_LIBRARY_PATH
+
+FROM public.ecr.aws/lambda/python:3.12 as runtime
+
+COPY --from=builder /tools/ipopt-install /tools/ipopt-install
+
+RUN pip install numpy pyomo
+
+COPY pyomo_funcs.py ./pyomo_funcs.py
+
+CMD [ "pyomo_funcs.test_loading_pyomo_func" ]
