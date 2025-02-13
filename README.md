@@ -13,6 +13,8 @@ URL: http://optimal.apphosting.services.
 1. `. venv/Scripts/activate`.
 2. `chalice deploy`.
 
+Also: `chalice logs`.
+
 ### Layers
 
 1. Managed layer: `optimal-dev-managed-layer: arn:aws:lambda:us-east-1:<AWS_ACCOUNT_NUMBER>:layer:optimal-dev-managed-layer:15`.
