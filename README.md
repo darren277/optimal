@@ -52,3 +52,7 @@ Test took 11.0744309425354 seconds
 {'scipy_version': '1.14.1', 'success': 'SUCCESSFULLY LOADED SCIPY', 'loading_time': 3.814697265625e-05}
 Test took 0.46985483169555664 seconds
 ```
+
+## POSTMAN
+
+After importing the file `optimal.postman_collection.json`, be sure to swap every case of `___REPLACE_WITH_API_KEY___` with the API Gateway key (`API_KEY` in `.env`).
