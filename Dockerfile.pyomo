@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 as builder
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -49,13 +49,11 @@ RUN mkdir build && cd build \
 
 ENV LD_LIBRARY_PATH=${TOOL_DIR}/ipopt-install/lib:$LD_LIBRARY_PATH
 
+FROM public.ecr.aws/lambda/python:3.12 as runtime
 
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /tools/ipopt-install /tools/ipopt-install
 
-RUN pip3 install numpy pyomo
+RUN pip install numpy pyomo
 
 COPY pyomo_funcs.py ./pyomo_funcs.py
 
