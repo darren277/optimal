@@ -6,7 +6,6 @@
     "dev": {
       "layers": [
         "arn:aws:lambda:us-east-1:160751179089:layer:pulp_layer:2",
-        "arn:aws:lambda:us-east-1:160751179089:layer:pyomo_layer:2",
         "arn:aws:lambda:us-east-1:160751179089:layer:sympy_layer:2"
       ],
       "lambda_functions": {
