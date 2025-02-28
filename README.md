@@ -2,9 +2,17 @@
 
 ## About
 
+This project uses Chalice (AWS Lambda and API Gateway deployment tool) to serve several different mathematical optimization tools (SymPy, SciPy, Pyomo, PuLP, DWave, etc).
+
+There is also an LLM component in the works that is meant to translate word problems into symbolic notation for processing.
+
+## Access
+
 URL: https://iknaxd5pj9.execute-api.us-east-1.amazonaws.com/api/.
 
-URL: http://optimal.apphosting.services.
+URL: https://optimal.apphosting.services.
+
+Note that it requires an API token.
 
 ## How to Use
 
