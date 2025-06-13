@@ -1,4 +1,19 @@
-# Optimal (WIP)
+# Optimal – Optimisation‑as‑a‑Service
+
+Optimal lets you submit plain‑English or JSON‑defined optimisation problems and returns optimal solutions using open‑source solvers (SymPy, PuLP, Pyomo, SciPy) or quantum‑annealing back‑ends (D‑Wave).
+
+## Quick demo
+
+```bash
+# Classify & structure a problem
+curl -G "$(chalice url)/llm_endpoint" \
+     --data-urlencode "problem_description=Minimise cost subject to demand ≥ 100"
+# → { "description": "...", "classification": "Linear programming" }
+
+# Solve a toy unconstrained revenue function
+curl -G "$(chalice url)/unconstrained_optimization" -d a=150 -d b=3
+# → { "p_star":25, "R_star":3750 }
+```
 
 ## About
 
@@ -6,7 +21,29 @@ URL: https://iknaxd5pj9.execute-api.us-east-1.amazonaws.com/api/.
 
 URL: http://optimal.apphosting.services.
 
+### Problem Spec
+
+```json
+{
+  "id": "uuid",
+  "kind": "quadratic_programming",
+  "objective": { "sense":"max", "expr": "3x + 4y - z^2" },
+  "vars": { "x": {"type":"real"}, "y":{"type":"integer"}, "z":{"type":"real"} },
+  "constraints": [ "x + y <= 10", "z >= 0" ]
+}
+```
+
 ## How to Use
+
+### Immediate Usage
+
+```shell
+python -m venv .venv && source .venv/bin/activate
+pip install chalice
+export AWS_PROFILE=your‑profile
+export QUEUE_NAME=optimal‑jobs‑dev
+chalice deploy --stage dev
+```
 
 ### Chalice
 
