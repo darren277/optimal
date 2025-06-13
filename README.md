@@ -93,3 +93,16 @@ Test took 0.46985483169555664 seconds
 ## POSTMAN
 
 After importing the file `optimal.postman_collection.json`, be sure to swap every case of `___REPLACE_WITH_API_KEY___` with the API Gateway key (`API_KEY` in `.env`).
+
+## Available Routes
+
+| Method | Path                                                               | Purpose                            | Example                                 |
+| ------ | ------------------------------------------------------------------ | ---------------------------------- | --------------------------------------- |
+| GET    | `/`                                                                | Placeholder UI                     | <host>/                                 |
+| GET    | `/unconstrained_optimization?a=120&b=2`                            | SymPy demo                         | returns `{p_star:30, R_star:3600}`      |
+| GET    | `/test_loading_scipy`                                              | Cold‑start import test             | shows version & load time               |
+| GET    | `/test_loading_pyomo`                                              | Same, but via *child* Lambda layer | —                                       |
+| GET    | `/test_loading_pulp`                                               | Direct import test                 | —                                       |
+| GET    | `/test_loading_sympy`                                              | Direct import test                 | —                                       |
+| GET    | `/test_loading_dwave`                                              | Layer import test                  | —                                       |
+| GET    | `/llm_endpoint?problem_description=Maximise profit subject to ...` | LLM classifier                     | returns `{description, classification}` |
