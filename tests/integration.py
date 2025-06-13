@@ -18,8 +18,10 @@ def test_loading_dependency(dep: str):
     print(data)
     print(f"Test took {time.time() - ts} seconds")
 
-test_loading_dependency('pyomo')
-test_loading_dependency('pulp')
-test_loading_dependency('sympy')
-test_loading_dependency('scipy')
-test_loading_dependency('dwave')
+if __name__ == '__main__':
+    print("Running integration tests...")
+    test_loading_dependency('pyomo')
+    test_loading_dependency('pulp')
+    test_loading_dependency('sympy')
+    test_loading_dependency('scipy')
+    test_loading_dependency('dwave')
