@@ -20,6 +20,8 @@ s3_env = Environment(loader=BaseLoader())
 
 USER_DATA_TABLE = 'userdata'
 
+LOCAL = False
+
 
 # https://temporarytestbucket123412341234.s3.amazonaws.com/frontend/index.html
 
