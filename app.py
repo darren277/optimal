@@ -293,3 +293,40 @@ def unconstrained_optimization_route():
     b = app.current_request.query_params.get('b', 1)
     return unconstrained_optimization(int(a), int(b))
 
+
+@app.route('/')
+def index():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'index.html'), 'r', encoding='utf-8').read() if LOCAL else s3_env.get_template('index.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+@app.route('/signup')
+def signup():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'signup.html'), 'r', encoding='utf-8').read() if LOCAL else s3_env.get_template('signup.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+@app.route('/login')
+def login():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'login.html'), 'r', encoding='utf-8').read() if LOCAL else s3_env.get_template('login.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+
+@app.route('/endpoints')
+def endpoints():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'endpoints.html'), 'r', encoding='utf-8').read() if LOCAL else s3_env.get_template('endpoints.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )

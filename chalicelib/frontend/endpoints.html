@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Optimal | Optimisation-as-a-Service</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+  <!-- ────────────────────── NAV BAR ────────────────────── -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">Optimal</a>
+      <div class="ms-auto">
+        <a class="btn btn-outline-secondary me-2" href="/login">Sign in</a>
+        <a class="btn btn-primary" href="/signup">Sign up</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ────────────────────── HERO / JUMBOTRON ────────────────────── -->
+  <header class="py-5 text-center bg-light">
+    <div class="container">
+      <h1 class="display-5 fw-semibold">Optimisation-as-a-Service</h1>
+      <p class="lead mb-4">
+        Optimal a powerful set of tools for finding mathematically optimal solutions to
+        complex problems. Whether you're optimising resource allocation, scheduling tasks,
+        or logistics, Optimal provides a user-friendly interface to define your problem in
+          mathematical terms, select the ideal algorithm, and find the best solution.
+      </p>
+    </div>
+  </header>
+
+  <!-- ────────────────────── ENDPOINTS TABLE ────────────────────── -->
+  <section class="container py-5">
+    <div class="row g-4 text-center">
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Purpose</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GET</td>
+            <td>/</td>
+            <td>Placeholder UI</td>
+            <td>&lt;host&gt;/</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/unconstrained_optimization?a=120&b=2</td>
+            <td>SymPy demo</td>
+            <td>returns {p_star:30, R_star:3600}</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/test_loading_scipy</td>
+            <td>Cold-start import test</td>
+            <td>shows version & load time</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/test_loading_pyomo</td>
+            <td>Same, but via *child* Lambda layer</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/test_loading_pulp</td>
+            <td>Direct import test</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/test_loading_sympy</td>
+            <td>Direct import test</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/test_loading_dwave</td>
+            <td>Layer import test</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td>/llm_endpoint?problem_description=Maximise profit subject to ...</td>
+            <td>LLM classifier</td>
+            <td>returns {description, classification}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ────────────────────── FOOTER ────────────────────── -->
+  <footer class="mt-auto py-3 bg-light border-top">
+    <div class="container text-center small text-muted">© 2025 Optimal · All rights reserved</div>
+  </footer>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+  </script>
+</body>
+</html>

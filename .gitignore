@@ -1,7 +1,6 @@
 .chalice/deployments/
 .chalice/deployed/
 
-chalicelib/
 scipylayer/
 sympylayer/
 .venv312/
