@@ -316,7 +316,32 @@ def optimize(event, context):
             "nit": res.nit}
 
 
-
+@app.route("/optimize", methods=["POST"], content_types=["application/json"])
+def optimize_route():
+    payload = app.current_request.json_body
+    print('payload', payload)
+    if not payload or "meta" not in payload:
+        return Response(body={"error": "Invalid payload"}, status_code=400)
+    if "solver" not in payload["meta"]:
+        return Response(body={"error": "Solver not specified"}, status_code=400)
+    if "parameters" not in payload:
+        return Response(body={"error": "Parameters not specified"}, status_code=400)
+    if "variables" not in payload:
+        return Response(body={"error": "Variables not specified"}, status_code=400)
+    if "constraints" not in payload:
+        return Response(body={"error": "Constraints not specified"}, status_code=400)
+    lambda_client = boto3.client('lambda')
+    try:
+        response = lambda_client.invoke(FunctionName='optimal-dev-optimize', InvocationType='RequestResponse',
+                                        Payload=json.dumps(payload, ensure_ascii=False).encode('utf-8'))
+        data = json.loads(response['Payload'].read())
+        print('data', data)
+        err = data.get('error')
+        if err:
+            return {'error': err}, 500
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
 
 
 @app.route('/')
