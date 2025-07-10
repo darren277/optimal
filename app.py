@@ -296,6 +296,29 @@ def unconstrained_optimization_route():
     return unconstrained_optimization(int(a), int(b))
 
 
+
+# TODO (ASAP): Require API key...
+
+@app.lambda_function(name='optimize')
+def optimize(event, context):
+    print('EVENT:', event)
+    payload = event
+    solver_name = payload["meta"]["solver"]
+    if solver_name == "scipy_slsqp":
+        from chalicelib.solver_dispatch import solve_scipy_slsqp
+        res = solve_scipy_slsqp(payload)
+    else:
+        return Response(body={"error": f"Unknown solver {solver_name}"}, status_code=400)
+
+    return {"status": res.message,
+            "fun": res.fun,
+            "x": res.x.tolist(),
+            "nit": res.nit}
+
+
+
+
+
 @app.route('/')
 def index():
     html = open(path.join(cwd, 'chalicelib', 'frontend', 'index.html'), 'r', encoding='utf-8').read() if LOCAL else env.get_template('index.html').render()
