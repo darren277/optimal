@@ -1,4 +1,19 @@
-# Optimal (WIP)
+# Optimal – Optimisation‑as‑a‑Service
+
+Optimal lets you submit plain‑English or JSON‑defined optimisation problems and returns optimal solutions using open‑source solvers (SymPy, PuLP, Pyomo, SciPy) or quantum‑annealing back‑ends (D‑Wave).
+
+## Quick demo
+
+```bash
+# Classify & structure a problem
+curl -G "$(chalice url)/llm_endpoint" \
+     --data-urlencode "problem_description=Minimise cost subject to demand ≥ 100"
+# → { "description": "...", "classification": "Linear programming" }
+
+# Solve a toy unconstrained revenue function
+curl -G "$(chalice url)/unconstrained_optimization" -d a=150 -d b=3
+# → { "p_star":25, "R_star":3750 }
+```
 
 ## About
 
@@ -14,7 +29,29 @@ URL: https://optimal.apphosting.services.
 
 Note that it requires an API token.
 
+### Problem Spec
+
+```json
+{
+  "id": "uuid",
+  "kind": "quadratic_programming",
+  "objective": { "sense":"max", "expr": "3x + 4y - z^2" },
+  "vars": { "x": {"type":"real"}, "y":{"type":"integer"}, "z":{"type":"real"} },
+  "constraints": [ "x + y <= 10", "z >= 0" ]
+}
+```
+
 ## How to Use
+
+### Immediate Usage
+
+```shell
+python -m venv .venv && source .venv/bin/activate
+pip install chalice
+export AWS_PROFILE=your‑profile
+export QUEUE_NAME=optimal‑jobs‑dev
+chalice deploy --stage dev
+```
 
 ### Chalice
 
@@ -64,3 +101,16 @@ Test took 0.46985483169555664 seconds
 ## POSTMAN
 
 After importing the file `optimal.postman_collection.json`, be sure to swap every case of `___REPLACE_WITH_API_KEY___` with the API Gateway key (`API_KEY` in `.env`).
+
+## Available Routes
+
+| Method | Path                                                               | Purpose                            | Example                                 |
+| ------ | ------------------------------------------------------------------ | ---------------------------------- | --------------------------------------- |
+| GET    | `/`                                                                | Placeholder UI                     | <host>/                                 |
+| GET    | `/unconstrained_optimization?a=120&b=2`                            | SymPy demo                         | returns `{p_star:30, R_star:3600}`      |
+| GET    | `/test_loading_scipy`                                              | Cold‑start import test             | shows version & load time               |
+| GET    | `/test_loading_pyomo`                                              | Same, but via *child* Lambda layer | —                                       |
+| GET    | `/test_loading_pulp`                                               | Direct import test                 | —                                       |
+| GET    | `/test_loading_sympy`                                              | Direct import test                 | —                                       |
+| GET    | `/test_loading_dwave`                                              | Layer import test                  | —                                       |
+| GET    | `/llm_endpoint?problem_description=Maximise profit subject to ...` | LLM classifier                     | returns `{description, classification}` |

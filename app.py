@@ -20,6 +20,8 @@ s3_env = Environment(loader=BaseLoader())
 
 USER_DATA_TABLE = 'userdata'
 
+LOCAL = False
+
 
 # https://temporarytestbucket123412341234.s3.amazonaws.com/frontend/index.html
 
@@ -34,7 +36,7 @@ dynamodb = boto3.resource("dynamodb")
 app.debug = True
 
 
-@app.route('/test_loading_pyomo')
+@app.route('/test_loading_pyomo', api_key_required=True)
 def test_loading_pyomo():
     lambda_client = boto3.client('lambda')
     try:
@@ -56,7 +58,7 @@ def test_loading_scipy_func(event, context):
     print("SUCCESSFULLY LOADED SCIPY", scipy.__version__)
     return {'scipy_version': scipy.__version__, 'success': 'SUCCESSFULLY LOADED SCIPY', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_scipy')
+@app.route('/test_loading_scipy', api_key_required=True)
 def test_loading_scipy():
     lambda_client = boto3.client('lambda')
     try:
@@ -71,7 +73,7 @@ def test_loading_scipy():
         return {'error': str(e)}, 500
 
 
-@app.route('/test_loading_pulp')
+@app.route('/test_loading_pulp', api_key_required=True)
 def test_loading_pulp():
     import time
     start_time = time.time()
@@ -79,7 +81,7 @@ def test_loading_pulp():
     print("SUCCESSFULLY LOADED PULP", pulp.__version__)
     return {'pulp_version': pulp.__version__, 'success': 'SUCCESSFULLY LOADED PULP', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_sympy')
+@app.route('/test_loading_sympy', api_key_required=True)
 def test_loading_sympy():
     import time
     start_time = time.time()
@@ -87,7 +89,7 @@ def test_loading_sympy():
     print("SUCCESSFULLY LOADED SYMPY", sympy.__version__)
     return {'sympy_version': sympy.__version__, 'success': 'SUCCESSFULLY LOADED SYMPY', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_dwave')
+@app.route('/test_loading_dwave', api_key_required=True)
 def test_loading_dwave():
     lambda_client = boto3.client('lambda')
     try:
@@ -220,7 +222,7 @@ def llm_endpoint_func(event, context):
     return {'openai_version': openai.__version__, 'success': 'SUCCESSFULLY LOADED OPENAI', 'loading_time': time.time() - start_time,
             'result': assistant_message, 'structured_response': structured_response}
 
-@app.route('/llm_endpoint')
+@app.route('/llm_endpoint', api_key_required=True)
 def llm_endpoint():
     args = app.current_request.query_params
     serialized_args = {key: val for key, val in args.items()} if args else {}
@@ -287,9 +289,97 @@ def unconstrained_optimization(a: int, b: int):
 
 # a = 100, b = 1
 
-@app.route('/unconstrained_optimization')
+@app.route('/unconstrained_optimization', api_key_required=True)
 def unconstrained_optimization_route():
     a = app.current_request.query_params.get('a', 100)
     b = app.current_request.query_params.get('b', 1)
     return unconstrained_optimization(int(a), int(b))
 
+
+
+# TODO (ASAP): Require API key...
+
+@app.lambda_function(name='optimize')
+def optimize(event, context):
+    print('EVENT:', event)
+    payload = event
+    solver_name = payload["meta"]["solver"]
+    if solver_name == "scipy_slsqp":
+        from chalicelib.solver_dispatch import solve_scipy_slsqp
+        res = solve_scipy_slsqp(payload)
+    else:
+        return Response(body={"error": f"Unknown solver {solver_name}"}, status_code=400)
+
+    if type(res) == dict and res['success'] == False:
+        return Response(body={"error": res['message']}, status_code=400)
+
+    return {"status": res.message,
+            "fun": res.fun,
+            "x": res.x.tolist(),
+            "nit": res.nit}
+
+
+@app.route("/optimize", methods=["POST"], content_types=["application/json"], api_key_required=True)
+def optimize_route():
+    payload = app.current_request.json_body
+    print('payload', payload)
+    if not payload or "meta" not in payload:
+        return Response(body={"error": "Invalid payload"}, status_code=400)
+    if "solver" not in payload["meta"]:
+        return Response(body={"error": "Solver not specified"}, status_code=400)
+    if "parameters" not in payload:
+        return Response(body={"error": "Parameters not specified"}, status_code=400)
+    if "variables" not in payload:
+        return Response(body={"error": "Variables not specified"}, status_code=400)
+    if "constraints" not in payload:
+        return Response(body={"error": "Constraints not specified"}, status_code=400)
+    lambda_client = boto3.client('lambda')
+    try:
+        response = lambda_client.invoke(FunctionName='optimal-dev-optimize', InvocationType='RequestResponse',
+                                        Payload=json.dumps(payload, ensure_ascii=False).encode('utf-8'))
+        data = json.loads(response['Payload'].read())
+        print('data', data)
+        err = data.get('error')
+        if err:
+            return {'error': err}, 500
+        return data
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@app.route('/')
+def index():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'index.html'), 'r', encoding='utf-8').read() if LOCAL else env.get_template('index.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+@app.route('/signup')
+def signup():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'signup.html'), 'r', encoding='utf-8').read() if LOCAL else env.get_template('signup.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+@app.route('/login')
+def login():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'login.html'), 'r', encoding='utf-8').read() if LOCAL else env.get_template('login.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
+
+
+@app.route('/endpoints')
+def endpoints():
+    html = open(path.join(cwd, 'chalicelib', 'frontend', 'endpoints.html'), 'r', encoding='utf-8').read() if LOCAL else env.get_template('endpoints.html').render()
+    return Response(
+        body=html,
+        headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'},
+        status_code=200
+    )
