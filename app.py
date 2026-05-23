@@ -36,7 +36,7 @@ dynamodb = boto3.resource("dynamodb")
 app.debug = True
 
 
-@app.route('/test_loading_pyomo')
+@app.route('/test_loading_pyomo', api_key_required=True)
 def test_loading_pyomo():
     lambda_client = boto3.client('lambda')
     try:
@@ -58,7 +58,7 @@ def test_loading_scipy_func(event, context):
     print("SUCCESSFULLY LOADED SCIPY", scipy.__version__)
     return {'scipy_version': scipy.__version__, 'success': 'SUCCESSFULLY LOADED SCIPY', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_scipy')
+@app.route('/test_loading_scipy', api_key_required=True)
 def test_loading_scipy():
     lambda_client = boto3.client('lambda')
     try:
@@ -73,7 +73,7 @@ def test_loading_scipy():
         return {'error': str(e)}, 500
 
 
-@app.route('/test_loading_pulp')
+@app.route('/test_loading_pulp', api_key_required=True)
 def test_loading_pulp():
     import time
     start_time = time.time()
@@ -81,7 +81,7 @@ def test_loading_pulp():
     print("SUCCESSFULLY LOADED PULP", pulp.__version__)
     return {'pulp_version': pulp.__version__, 'success': 'SUCCESSFULLY LOADED PULP', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_sympy')
+@app.route('/test_loading_sympy', api_key_required=True)
 def test_loading_sympy():
     import time
     start_time = time.time()
@@ -89,7 +89,7 @@ def test_loading_sympy():
     print("SUCCESSFULLY LOADED SYMPY", sympy.__version__)
     return {'sympy_version': sympy.__version__, 'success': 'SUCCESSFULLY LOADED SYMPY', 'loading_time': time.time() - start_time}
 
-@app.route('/test_loading_dwave')
+@app.route('/test_loading_dwave', api_key_required=True)
 def test_loading_dwave():
     lambda_client = boto3.client('lambda')
     try:
@@ -222,7 +222,7 @@ def llm_endpoint_func(event, context):
     return {'openai_version': openai.__version__, 'success': 'SUCCESSFULLY LOADED OPENAI', 'loading_time': time.time() - start_time,
             'result': assistant_message, 'structured_response': structured_response}
 
-@app.route('/llm_endpoint')
+@app.route('/llm_endpoint', api_key_required=True)
 def llm_endpoint():
     args = app.current_request.query_params
     serialized_args = {key: val for key, val in args.items()} if args else {}
@@ -289,7 +289,7 @@ def unconstrained_optimization(a: int, b: int):
 
 # a = 100, b = 1
 
-@app.route('/unconstrained_optimization')
+@app.route('/unconstrained_optimization', api_key_required=True)
 def unconstrained_optimization_route():
     a = app.current_request.query_params.get('a', 100)
     b = app.current_request.query_params.get('b', 1)
@@ -316,7 +316,7 @@ def optimize(event, context):
             "nit": res.nit}
 
 
-@app.route("/optimize", methods=["POST"], content_types=["application/json"])
+@app.route("/optimize", methods=["POST"], content_types=["application/json"], api_key_required=True)
 def optimize_route():
     payload = app.current_request.json_body
     print('payload', payload)
