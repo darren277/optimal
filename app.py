@@ -310,6 +310,9 @@ def optimize(event, context):
     else:
         return Response(body={"error": f"Unknown solver {solver_name}"}, status_code=400)
 
+    if type(res) == dict and res['success'] == False:
+        return Response(body={"error": res['message']}, status_code=400)
+
     return {"status": res.message,
             "fun": res.fun,
             "x": res.x.tolist(),
