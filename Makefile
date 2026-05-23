@@ -2,8 +2,9 @@ include .env
 
 #RESOURCE_ID=$(OPTIMIZE_SINGLE_VARIABLE_RESOURCE_ID)
 #RESOURCE_ID=$(OPTIMIZE_MULTIPLE_VARIABLES_RESOURCE_ID)
-RESOURCE_ID=$(UNCONSTRAINED_OPTIMIZATION_RESOURCE_ID)
-METHOD=GET
+RESOURCE_ID=$(OPTIMIZE_RESOURCE_ID)
+#METHOD=GET
+METHOD=POST
 
 
 create-pulp-layer:
@@ -26,8 +27,10 @@ create-usage-plan:
 	aws apigateway create-usage-plan --name "OptimalUsagePlan" --description "Usage plan for optimal Chalice app" \
 	--api-stages 'apiId=$(REST_API_ID),stage=api' --throttle "burstLimit=100,rateLimit=50" --quota "limit=1000,period=DAY"
 
+API_KEY_NAME="OptimalAPIKey-ArsMedicaTechDemo"
+
 create-api-key:
-	aws apigateway create-api-key --name "OptimalAPIKey" --description "API key for optimal Chalice app" --enabled
+	aws apigateway create-api-key --name $(API_KEY_NAME) --description "API key for optimal Chalice app" --enabled
 
 link-key-to-plan:
 	aws apigateway create-usage-plan-key --usage-plan-id $(USAGE_PLAN_ID) --key-id $(API_KEY_ID) --key-type "API_KEY"
